@@ -95,7 +95,7 @@ abstract class SymbolicXMLBuilder(p: Parsers#Parser, preserveWS: Boolean) {
   protected def mkXML(
     pos: Position,
     isPattern: Boolean,
-    pre: Tree,
+    pre: String,
     label: Tree,
     attrs: Tree,
     scope: Tree,
@@ -106,8 +106,10 @@ abstract class SymbolicXMLBuilder(p: Parsers#Parser, preserveWS: Boolean) {
       if (children.isEmpty) Nil
       else List(Typed(makeXMLseq(pos, children), wildStar))
 
-    def pat    = Apply(_scala_xml__Elem, List(pre, label, wild, wild) ::: convertToTextPat(children))
-    def nonpat = New(_scala_xml_Elem, List(List(pre, label, attrs, scope, if (empty) Literal(Constant(true)) else Literal(Constant(false))) ::: starArgs))
+    val prefix = if(pre == null) q"None" else q"Some($pre)"
+
+    def pat    = Apply(_scala_xml__Elem, List(prefix, label, wild, wild) ::: convertToTextPat(children))
+    def nonpat = New(_scala_xml_Elem, List(List(prefix, label, attrs, scope, if (empty) Literal(Constant(true)) else Literal(Constant(false))) ::: starArgs))
 
     atPos(pos) { if (isPattern) pat else nonpat }
   }
@@ -140,8 +142,8 @@ abstract class SymbolicXMLBuilder(p: Parsers#Parser, preserveWS: Boolean) {
   /** @todo: attributes */
   def makeXMLpat(pos: Position, n: String, args: Seq[Tree]): Tree = {
     val (prepat, labpat) = splitPrefix(n) match {
-      case (Some(pre), rest)  => (const(pre), const(rest))
-      case _                  => (wild, const(n))
+      case (Some(pre), rest)  => (pre, const(rest))
+      case _                  => (null, const(n))
     }
     mkXML(pos, isPattern = true, prepat, labpat, null, null, empty = false, args)
   }
@@ -257,7 +259,7 @@ abstract class SymbolicXMLBuilder(p: Parsers#Parser, preserveWS: Boolean) {
     val body = mkXML(
       pos.makeTransparent,
       isPattern = false,
-      const(pre),
+      pre,
       const(newlabel),
       makeSymbolicAttrs,
       Ident(_scope),

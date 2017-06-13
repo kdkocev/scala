@@ -89,8 +89,10 @@ lazy val publishSettings : Seq[Setting[_]] = Seq(
 // `baseVersionSuffix`.
 globalVersionSettings
 baseVersion in Global := "2.12.3"
-baseVersionSuffix in Global := "SNAPSHOT"
+baseVersionSuffix in Global := "bin-scalaxml4-SNAPSHOT"
 mimaReferenceVersion in Global := Some("2.12.0")
+
+publishArtifact in (Compile, packageDoc) in ThisBuild := false
 
 scalaVersion in Global := versionProps("starr.version")
 
